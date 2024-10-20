@@ -96,6 +96,19 @@ public class OpenCvFunctions {
     }
 
     public void normalization(Mat image) {
+        /*
+        // Oblicz min i max wartości piksela
+    Core.MinMaxLocResult minMax = Core.minMaxLoc(image);
+    double minVal = minMax.minVal;
+    double maxVal = minMax.maxVal;
+
+    // Normalizacja obrazu na podstawie minVal i maxVal
+    Mat normalizedImage = new Mat();
+    image.convertTo(normalizedImage, CvType.CV_8U, 255.0 / (maxVal - minVal), -255.0 * minVal / (maxVal - minVal));
+
+    // Zapis znormalizowanego obrazu
+    Imgcodecs.imwrite("normalized_output.jpg", normalizedImage);
+         */
         Core.MinMaxLocResult imageMinMaxLocResult = Core.minMaxLoc(image);
         Core.normalize(image, image, 0, 255, Core.NORM_MINMAX);
     }
@@ -113,7 +126,6 @@ public class OpenCvFunctions {
     }
 
     public void histogram(Mat image) {
-
         List<Mat> images = Collections.singletonList(image);
         Mat histogram = new Mat();
         Imgproc.calcHist(images, new MatOfInt(0), new Mat(), histogram, new MatOfInt(256), new MatOfFloat(0, 256));
