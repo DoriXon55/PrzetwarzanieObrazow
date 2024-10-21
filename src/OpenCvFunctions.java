@@ -53,36 +53,28 @@ public class OpenCvFunctions {
     public void actoins(Mat image) {
         try {
             Mat addedImage = new Mat();
-            Mat subtractedImage = new Mat();
+            Mat subtractedImageAB = new Mat();
+            Mat subtractedImageBA = new Mat();
             Mat multiplyImage = new Mat();
-            Mat divideImage = new Mat();
-
+            Mat divideImageAB = new Mat();
+            Mat divideImageBA = new Mat();
 
             BufferedImage bufferedImage2 = imageDownloader.downloadImage();
             Mat image2 = imageDownloader.bufferedImageToMat(bufferedImage2);
 
             Core.add(image, image2, addedImage);
-            Core.subtract(image, image2, subtractedImage);
+            Core.subtract(image, image2, subtractedImageAB);
+            Core.subtract(image2, image, subtractedImageBA);
             Core.multiply(image, image2, multiplyImage);
-            Core.divide(image, image2, divideImage);
-
-            Mat imageMinusImage2 = new Mat(); // A\B
-            Mat notImage2 = new Mat();
-            Core.bitwise_not(image2, notImage2);
-            Core.bitwise_and(image, notImage2, imageMinusImage2);
-
-            Mat image2Minusimage = new Mat(); // B\A
-            Mat notImage = new Mat();
-            Core.bitwise_not(image, notImage);
-            Core.bitwise_and(image2, notImage, image2Minusimage);
+            Core.divide(image, image2, divideImageAB);
+            Core.divide(image2, image, divideImageBA);
 
             saveImage(addedImage, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\addedImage.jpg");
-            saveImage(subtractedImage, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\subtractedImage.jpg");
+            saveImage(subtractedImageAB, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\subtractedImageAB.jpg");
+            saveImage(subtractedImageBA, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\subtractedImageBA.jpg");
             saveImage(multiplyImage, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\multiplyImage.jpg");
-            saveImage(divideImage, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\divideImage.jpg");
-            saveImage(imageMinusImage2, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\AB.jpg");
-            saveImage(image2Minusimage, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\BA.jpg");
-
+            saveImage(divideImageAB, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\divideImageAB.jpg");
+            saveImage(divideImageBA, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\divideImageBA.jpg");
         } catch (IOException e) {
             System.out.println("Error: Problem w nakladaniu zdjec" + e.getMessage());
         }
@@ -95,40 +87,63 @@ public class OpenCvFunctions {
         saveImage(binary, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\'binary.jpg");
     }
 
-    public void normalization(Mat image) {
-        /*
-        // Oblicz min i max wartości piksela
-    Core.MinMaxLocResult minMax = Core.minMaxLoc(image);
-    double minVal = minMax.minVal;
-    double maxVal = minMax.maxVal;
+    public void normalization() {
+        Mat image = Imgcodecs.imread("C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\task4Picture.jpg");
 
-    // Normalizacja obrazu na podstawie minVal i maxVal
-    Mat normalizedImage = new Mat();
-    image.convertTo(normalizedImage, CvType.CV_8U, 255.0 / (maxVal - minVal), -255.0 * minVal / (maxVal - minVal));
+        Imgproc.cvtColor(image, image, Imgproc.COLOR_BGR2GRAY);
 
-    // Zapis znormalizowanego obrazu
-    Imgcodecs.imwrite("normalized_output.jpg", normalizedImage);
-         */
-        Core.MinMaxLocResult imageMinMaxLocResult = Core.minMaxLoc(image);
-        Core.normalize(image, image, 0, 255, Core.NORM_MINMAX);
+        Core.MinMaxLocResult minMaxImageValue = Core.minMaxLoc(image);
+        double minVal = minMaxImageValue.minVal;
+        double maxVal = minMaxImageValue.maxVal;
+        System.out.printf("Wartosci przed normalizacja -> min: %.2f, max: %.2f \n", minVal, maxVal);
+
+        Mat normalizedImage = new Mat();
+        image.convertTo(normalizedImage, CvType.CV_8U, 255.0 / (maxVal - minVal), -255.0 * minVal / (maxVal - minVal));
+        Core.MinMaxLocResult minMaxResultImage = Core.minMaxLoc(normalizedImage);
+        minVal = minMaxResultImage.minVal;
+        maxVal = minMaxResultImage.maxVal;
+        System.out.printf("Wartosci po normalizacji -> min: %.2f, max: %.2f \n", minVal, maxVal);
+        saveImage(normalizedImage, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\normalizedImage.jpg");
     }
 
     public void contrast(Mat image, Scanner scanner) {
         System.out.println("O ile chcesz zmienic kontrast?");
         userInput = scanner.nextDouble();
-        Core.multiply(image, new Scalar(userInput), image);
+        Core.multiply(image, new Scalar(userInput, userInput, userInput), image);
     }
 
     public void brightness(Mat image, Scanner scanner) {
         System.out.println("O ile chcesz rozjasnic zdjecie?");
         userInput = scanner.nextDouble();
-        Core.add(image, new Scalar(userInput), image);
+        Core.add(image, new Scalar(userInput, userInput, userInput), image);
     }
 
     public void histogram(Mat image) {
-        List<Mat> images = Collections.singletonList(image);
-        Mat histogram = new Mat();
-        Imgproc.calcHist(images, new MatOfInt(0), new Mat(), histogram, new MatOfInt(256), new MatOfFloat(0, 256));
+        List<Mat> images = new ArrayList<>();
+        Core.split(image, images);
+
+
+        int histogramSize = 256;
+        float[] range = {0, 256};
+        MatOfFloat histogramRange = new MatOfFloat(range);
+        boolean accumulate = false;
+
+        Mat bHistogram = new Mat();
+        Mat gHistogram = new Mat();
+        Mat rHistogram = new Mat();
+
+
+        Imgproc.calcHist(Collections.singletonList(images.get(0)), new MatOfInt(0), new Mat(), bHistogram, new MatOfInt(histogramSize), histogramRange, accumulate);
+        Imgproc.calcHist(Collections.singletonList(images.get(1)), new MatOfInt(0), new Mat(), gHistogram, new MatOfInt(histogramSize), histogramRange, accumulate);
+        Imgproc.calcHist(Collections.singletonList(images.get(2)), new MatOfInt(0), new Mat(), rHistogram, new MatOfInt(histogramSize), histogramRange, accumulate);
+
+        // Teraz masz obliczone histogramy dla każdego kanału, nie musisz rysować ich ręcznie.
+        // Możesz zapisać histogramy lub użyć narzędzia do wizualizacji.
+
+        // Przykładowe wyjście: zapisanie histogramów jako plików CSV (lub innych formatów)
+        saveImage(bHistogram, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\blueHist.jpg");
+        saveImage(gHistogram, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\greenHist.jpg");
+        saveImage(rHistogram, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\redHist.jpg");
     }
 
     public void saveImage(Mat image, String outputFilePath) {
