@@ -29,16 +29,18 @@ public class Main {
                 System.out.println("Error: Zdjecie nie zostalo zaladowane");
                 return;
             } else {
-                System.out.println("Wybierz opcje: \n" +
-                        "1. Zmien kontrast\n" +
-                        "2. Zmien jasnosc\n" +
-                        "3. Naloz dwa obrazy na siebie\n" +
-                        "4. Normalizacja\n" +
-                        "5. Rozloz obraz na 3 skladowe\n" +
-                        "6. Wczytaj przestrzen kolorow w HSV\n" +
-                        "7. Binaryzacja (wczytanie w skali szarosci)\n" +
-                        "8. Dzialania na obrazach\n" +
-                        "9. Histogram\n");
+                System.out.println("""
+                        Wybierz opcje:\s
+                        1. Zmien kontrast
+                        2. Zmien jasnosc
+                        3. Naloz dwa obrazy na siebie
+                        4. Normalizacja
+                        5. Rozloz obraz na 3 skladowe
+                        6. Wczytaj przestrzen kolorow w HSV
+                        7. Binaryzacja (wczytanie w skali szarosci)
+                        8. Dzialania na obrazach
+                        9. Histogram
+                        """);
                 userOption = scanner.nextInt();
                 // PRZEROBIC NA ZAPISY W FUNKCJACH PRAWDOPOODBNIE
                 switch (userOption) {

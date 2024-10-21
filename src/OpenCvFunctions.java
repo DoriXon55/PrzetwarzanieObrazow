@@ -119,31 +119,36 @@ public class OpenCvFunctions {
     }
 
     public void histogram(Mat image) {
-        List<Mat> images = new ArrayList<>();
-        Core.split(image, images);
+        List<Mat> bgrPlanes = new ArrayList<>();
+        Core.split(image, bgrPlanes);
 
-
-        int histogramSize = 256;
+        int histSize = 256;
         float[] range = {0, 256};
-        MatOfFloat histogramRange = new MatOfFloat(range);
-        boolean accumulate = false;
+        MatOfFloat histRange = new MatOfFloat(range);
 
-        Mat bHistogram = new Mat();
-        Mat gHistogram = new Mat();
-        Mat rHistogram = new Mat();
+        Mat bHist = new Mat(), gHist = new Mat(), rHist = new Mat();
 
+        Imgproc.calcHist(bgrPlanes.subList(0, 1), new MatOfInt(0), new Mat(), bHist, new MatOfInt(histSize), histRange, false);
+        Imgproc.calcHist(bgrPlanes.subList(1, 2), new MatOfInt(0), new Mat(), gHist, new MatOfInt(histSize), histRange, false);
+        Imgproc.calcHist(bgrPlanes.subList(2, 3), new MatOfInt(0), new Mat(), rHist, new MatOfInt(histSize), histRange, false);
 
-        Imgproc.calcHist(Collections.singletonList(images.get(0)), new MatOfInt(0), new Mat(), bHistogram, new MatOfInt(histogramSize), histogramRange, accumulate);
-        Imgproc.calcHist(Collections.singletonList(images.get(1)), new MatOfInt(0), new Mat(), gHistogram, new MatOfInt(histogramSize), histogramRange, accumulate);
-        Imgproc.calcHist(Collections.singletonList(images.get(2)), new MatOfInt(0), new Mat(), rHistogram, new MatOfInt(histogramSize), histogramRange, accumulate);
+        Mat combinedHist = new Mat();
+        Core.add(bHist, gHist, combinedHist);
+        Core.add(combinedHist, rHist, combinedHist);
 
-        // Teraz masz obliczone histogramy dla każdego kanału, nie musisz rysować ich ręcznie.
-        // Możesz zapisać histogramy lub użyć narzędzia do wizualizacji.
+        Core.normalize(combinedHist, combinedHist, 0, 256, Core.NORM_MINMAX);
 
-        // Przykładowe wyjście: zapisanie histogramów jako plików CSV (lub innych formatów)
-        saveImage(bHistogram, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\blueHist.jpg");
-        saveImage(gHistogram, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\greenHist.jpg");
-        saveImage(rHistogram, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\redHist.jpg");
+        int histW = 500, histH = 500;
+        int binW = Math.round((float) histW / histSize);
+
+        Mat histImage = new Mat(histH, histW, CvType.CV_8UC3, new Scalar(255, 255, 255));
+        for (int i = 1; i < histSize; i++) {
+            Imgproc.line(histImage,
+                    new Point(binW * (i - 1), histH - Math.round(combinedHist.get(i - 1, 0)[0])),
+                    new Point(binW * i, histH - Math.round(combinedHist.get(i, 0)[0])),
+                    new Scalar(0, 0, 0), 2);  // rysujemy w kolorze czarnym
+        }
+        saveImage(histImage, "C:\\Users\\doria\\IdeaProjects\\PrzetwarzanieObrazow_3\\src\\histImage.jpg");
     }
 
     public void saveImage(Mat image, String outputFilePath) {
